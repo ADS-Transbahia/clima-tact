@@ -109,13 +109,16 @@ export async function setCommunicationStatus(
   id: string,
   status: CommunicationStatus,
 ) {
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("communications")
     .update({
       status,
       publish_at: status === "published" ? new Date().toISOString() : null,
     })
-    .eq("id", id);
+    .eq("id", id)
+    .select("company_id, title")
+    .single();
 
   if (error) throw error;
+  return data as { company_id: string; title: string };
 }

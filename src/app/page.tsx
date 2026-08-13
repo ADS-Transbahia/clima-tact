@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/server/services/profile";
 import { listPublishedCommunications } from "@/server/services/communications";
+import { countUnreadNotifications } from "@/server/services/notifications";
 import { signOut } from "./login/actions";
 
 const roleLabel: Record<string, string> = {
@@ -42,11 +43,14 @@ export default async function Home() {
     );
   }
 
-  const communications = await listPublishedCommunications(supabase);
+  const [communications, unreadCount] = await Promise.all([
+    listPublishedCommunications(supabase),
+    countUnreadNotifications(supabase),
+  ]);
 
   return (
     <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-6 bg-white px-4 py-8">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-sm text-neutral-500">{profile.company?.name}</p>
           <h1 className="text-lg font-semibold text-neutral-900">
@@ -55,6 +59,9 @@ export default async function Home() {
           <p className="text-xs text-neutral-400">{roleLabel[profile.role]}</p>
         </div>
         <div className="flex items-center gap-4">
+          <Link href="/notifications" className="text-sm text-neutral-500 underline">
+            Notificações{unreadCount > 0 && ` (${unreadCount})`}
+          </Link>
           {ADMIN_ROLES.has(profile.role) && (
             <Link
               href="/admin/communications"

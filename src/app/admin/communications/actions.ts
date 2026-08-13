@@ -10,6 +10,7 @@ import {
   type CommunicationInput,
   type CommunicationStatus,
 } from "@/server/services/communications";
+import { notifyCompanyOfCommunication } from "@/server/services/notifications";
 
 function parseInput(formData: FormData): CommunicationInput | null {
   const title = String(formData.get("title") ?? "").trim();
@@ -49,6 +50,9 @@ export async function createCommunicationAction(
 
   try {
     await createCommunication(supabase, profile.company_id, user.id, input, publishNow);
+    if (publishNow) {
+      await notifyCompanyOfCommunication(supabase, profile.company_id, input.title);
+    }
   } catch (error) {
     return error instanceof Error ? error.message : "Erro ao salvar.";
   }
@@ -81,7 +85,11 @@ export async function updateCommunicationAction(
 
 export async function changeCommunicationStatus(id: string, status: CommunicationStatus) {
   const supabase = await createClient();
-  await setCommunicationStatus(supabase, id, status);
+  const communication = await setCommunicationStatus(supabase, id, status);
+  if (status === "published") {
+    await notifyCompanyOfCommunication(supabase, communication.company_id, communication.title);
+  }
   revalidatePath("/admin/communications");
   revalidatePath("/");
+  revalidatePath("/notifications");
 }
