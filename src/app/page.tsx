@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/server/services/profile";
@@ -10,6 +11,8 @@ const roleLabel: Record<string, string> = {
   sms_admin: "SMS",
   company_admin: "Administrador",
 };
+
+const ADMIN_ROLES = new Set(["hr_admin", "sms_admin", "company_admin"]);
 
 export default async function Home() {
   const supabase = await createClient();
@@ -51,11 +54,21 @@ export default async function Home() {
           </h1>
           <p className="text-xs text-neutral-400">{roleLabel[profile.role]}</p>
         </div>
-        <form action={signOut}>
-          <button type="submit" className="text-sm text-neutral-500 underline">
-            Sair
-          </button>
-        </form>
+        <div className="flex items-center gap-4">
+          {ADMIN_ROLES.has(profile.role) && (
+            <Link
+              href="/admin/communications"
+              className="text-sm text-neutral-500 underline"
+            >
+              Administração
+            </Link>
+          )}
+          <form action={signOut}>
+            <button type="submit" className="text-sm text-neutral-500 underline">
+              Sair
+            </button>
+          </form>
+        </div>
       </header>
 
       <section className="flex flex-col gap-3">
