@@ -32,6 +32,14 @@ export default async function AdminLayout({
           </Link>
           <h1 className="text-lg font-semibold text-neutral-900">Administração</h1>
         </div>
+        <nav className="flex gap-4 text-sm">
+          <Link href="/admin/communications" className="text-neutral-500 hover:underline">
+            Comunicações
+          </Link>
+          <Link href="/admin/surveys" className="text-neutral-500 hover:underline">
+            Pesquisas
+          </Link>
+        </nav>
       </header>
       {children}
     </div>

@@ -4,7 +4,9 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/server/services/profile";
 import { listPublishedCommunications } from "@/server/services/communications";
 import { countUnreadNotifications } from "@/server/services/notifications";
+import { getPendingPrioritySurvey } from "@/server/services/surveys";
 import { signOut } from "./login/actions";
+import { PrioritySurveyBanner } from "./PrioritySurveyBanner";
 
 const roleLabel: Record<string, string> = {
   employee: "Colaborador",
@@ -43,9 +45,10 @@ export default async function Home() {
     );
   }
 
-  const [communications, unreadCount] = await Promise.all([
+  const [communications, unreadCount, pendingSurvey] = await Promise.all([
     listPublishedCommunications(supabase),
     countUnreadNotifications(supabase),
+    getPendingPrioritySurvey(supabase),
   ]);
 
   return (
@@ -78,8 +81,17 @@ export default async function Home() {
         </div>
       </header>
 
+      {pendingSurvey && (
+        <PrioritySurveyBanner surveyId={pendingSurvey.id} title={pendingSurvey.title} />
+      )}
+
       <section className="flex flex-col gap-3">
-        <h2 className="text-sm font-medium text-neutral-500">Notícias</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-medium text-neutral-500">Notícias</h2>
+          <Link href="/surveys" className="text-sm text-neutral-500 underline">
+            Pesquisas
+          </Link>
+        </div>
         {communications.length === 0 ? (
           <p className="rounded-md border border-dashed border-neutral-300 px-4 py-8 text-center text-sm text-neutral-400">
             Nenhuma comunicação publicada ainda.

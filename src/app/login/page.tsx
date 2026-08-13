@@ -15,8 +15,8 @@ export default async function LoginPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-8 bg-neutral-50 px-4">
       <div className="text-center">
-        <h1 className="text-xl font-semibold text-neutral-900">Transbahia</h1>
-        <p className="text-sm text-neutral-500">Plataforma do Colaborador</p>
+        <h1 className="text-xl font-semibold text-neutral-900">🧭 Clima Tact</h1>
+        <p className="text-sm text-neutral-500">Transbahia · Plataforma do Colaborador</p>
       </div>
       <LoginForm />
     </main>
