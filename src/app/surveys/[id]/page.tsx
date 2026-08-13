@@ -1,7 +1,13 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getSurvey, listSurveyQuestions, hasParticipated } from "@/server/services/surveys";
+import {
+  getSurvey,
+  listSurveyQuestions,
+  hasParticipated,
+  getSurveyDraft,
+  computeProgress,
+} from "@/server/services/surveys";
 import { SurveyResponseForm } from "./SurveyResponseForm";
 
 export default async function SurveyRespondPage({
@@ -20,6 +26,9 @@ export default async function SurveyRespondPage({
   if (!survey || survey.status !== "active") notFound();
 
   const done = await hasParticipated(supabase, id);
+  const questions = done ? [] : await listSurveyQuestions(supabase, id);
+  const draft = done ? null : await getSurveyDraft(supabase, id);
+  const progress = computeProgress(questions, draft);
 
   return (
     <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-6 bg-white px-4 py-8">
@@ -39,10 +48,23 @@ export default async function SurveyRespondPage({
           {survey.is_anonymous ? " de forma anônima." : "."}
         </p>
       ) : (
-        <SurveyResponseForm
-          surveyId={id}
-          questions={await listSurveyQuestions(supabase, id)}
-        />
+        <>
+          {draft && progress > 0 && (
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center justify-between text-xs text-neutral-500">
+                <span>Você já respondeu parte desta pesquisa</span>
+                <span>{progress}%</span>
+              </div>
+              <div className="h-2 rounded bg-neutral-100">
+                <div
+                  className="h-2 rounded bg-neutral-900"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+          )}
+          <SurveyResponseForm surveyId={id} questions={questions} draft={draft} />
+        </>
       )}
     </main>
   );

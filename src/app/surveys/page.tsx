@@ -1,7 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { listActiveSurveys, hasParticipated } from "@/server/services/surveys";
+import {
+  listActiveSurveys,
+  hasParticipated,
+  getSurveyDraft,
+  listSurveyQuestions,
+  computeProgress,
+} from "@/server/services/surveys";
 
 export default async function SurveysPage() {
   const supabase = await createClient();
@@ -11,8 +17,18 @@ export default async function SurveysPage() {
   if (!user) redirect("/login");
 
   const surveys = await listActiveSurveys(supabase);
-  const statuses = await Promise.all(
-    surveys.map((s) => hasParticipated(supabase, s.id)),
+
+  const items = await Promise.all(
+    surveys.map(async (s) => {
+      const done = await hasParticipated(supabase, s.id);
+      if (done) return { survey: s, done, progress: 100 };
+
+      const [draft, questions] = await Promise.all([
+        getSurveyDraft(supabase, s.id),
+        listSurveyQuestions(supabase, s.id),
+      ]);
+      return { survey: s, done, progress: computeProgress(questions, draft) };
+    }),
   );
 
   return (
@@ -24,30 +40,41 @@ export default async function SurveysPage() {
         <h1 className="text-lg font-semibold text-neutral-900">Pesquisas</h1>
       </header>
 
-      {surveys.length === 0 ? (
+      {items.length === 0 ? (
         <p className="rounded-md border border-dashed border-neutral-300 px-4 py-8 text-center text-sm text-neutral-400">
           Nenhuma pesquisa disponível no momento.
         </p>
       ) : (
         <ul className="flex flex-col gap-3">
-          {surveys.map((s, i) => (
+          {items.map(({ survey: s, done, progress }) => (
             <li key={s.id} className="rounded-md border border-neutral-200 p-4">
               <div className="flex items-center justify-between gap-4">
-                <div>
+                <div className="flex-1">
                   <h2 className="font-medium text-neutral-900">{s.title}</h2>
                   {s.description && (
                     <p className="mt-1 text-sm text-neutral-600">{s.description}</p>
+                  )}
+                  {!done && progress > 0 && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <div className="h-1.5 w-32 rounded bg-neutral-100">
+                        <div
+                          className="h-1.5 rounded bg-neutral-900"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                      <span className="text-xs text-neutral-400">{progress}%</span>
+                    </div>
                   )}
                 </div>
                 <Link
                   href={`/surveys/${s.id}`}
                   className={`shrink-0 rounded-md px-3 py-1.5 text-sm font-medium ${
-                    statuses[i]
+                    done
                       ? "bg-neutral-100 text-neutral-500"
                       : "bg-neutral-900 text-white"
                   }`}
                 >
-                  {statuses[i] ? "Respondida" : "Responder"}
+                  {done ? "Respondida" : progress > 0 ? "Continuar" : "Responder"}
                 </Link>
               </div>
             </li>

@@ -70,6 +70,7 @@ export async function addQuestionAction(
   const text = String(formData.get("text") ?? "").trim();
   const type = String(formData.get("type") ?? "") as QuestionType;
   const required = formData.get("required") === "on";
+  const section = String(formData.get("section") ?? "").trim();
   const optionsRaw = String(formData.get("options") ?? "");
   const options = optionsRaw
     .split("\n")
@@ -90,6 +91,7 @@ export async function addQuestionAction(
       type,
       required,
       options,
+      section,
     });
   } catch (error) {
     return error instanceof Error ? error.message : "Erro ao adicionar pergunta.";

@@ -55,6 +55,7 @@ export type SurveyQuestion = {
   text: string;
   required: boolean;
   type: QuestionType;
+  section: string | null;
   survey_question_options: SurveyQuestionOption[];
 };
 
@@ -143,7 +144,9 @@ export async function listSurveyQuestions(
 ): Promise<SurveyQuestion[]> {
   const { data, error } = await supabase
     .from("survey_questions")
-    .select("id, survey_id, order, text, required, type, survey_question_options(id, label, order)")
+    .select(
+      "id, survey_id, order, text, required, type, section, survey_question_options(id, label, order)",
+    )
     .eq("survey_id", surveyId)
     .order("order", { ascending: true });
 
@@ -162,6 +165,7 @@ export type QuestionInput = {
   type: QuestionType;
   required: boolean;
   options: string[];
+  section?: string;
 };
 
 export async function addSurveyQuestion(
@@ -178,6 +182,7 @@ export async function addSurveyQuestion(
       text: input.text,
       required: input.required,
       type: input.type,
+      section: input.section || null,
     })
     .select("id")
     .single();
@@ -245,4 +250,43 @@ export async function getPendingPrioritySurvey(
   }
 
   return null;
+}
+
+export type DraftAnswers = Record<string, unknown>;
+
+export async function getSurveyDraft(
+  supabase: SupabaseClient,
+  surveyId: string,
+): Promise<DraftAnswers | null> {
+  const { data, error } = await supabase
+    .from("survey_drafts")
+    .select("answers")
+    .eq("survey_id", surveyId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return (data?.answers as DraftAnswers) ?? null;
+}
+
+export async function saveSurveyDraft(
+  supabase: SupabaseClient,
+  surveyId: string,
+  companyId: string,
+  userId: string,
+  answers: DraftAnswers,
+) {
+  const { error } = await supabase
+    .from("survey_drafts")
+    .upsert(
+      { survey_id: surveyId, company_id: companyId, user_id: userId, answers },
+      { onConflict: "survey_id,user_id" },
+    );
+
+  if (error) throw error;
+}
+
+export function computeProgress(questions: SurveyQuestion[], answers: DraftAnswers | null) {
+  if (!answers || questions.length === 0) return 0;
+  const answered = questions.filter((q) => answers[q.id] !== undefined).length;
+  return Math.round((answered / questions.length) * 100);
 }

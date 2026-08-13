@@ -61,35 +61,45 @@ export default async function SurveyDetailPage({
         <h3 className="text-sm font-medium text-neutral-500">
           Perguntas ({questions.length})
         </h3>
-        {questions.map((q, i) => (
-          <div key={q.id} className="rounded-md border border-neutral-200 p-4">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-sm text-neutral-900">
-                  {i + 1}. {q.text}
-                  {q.required && <span className="text-red-500"> *</span>}
-                </p>
-                <p className="mt-1 text-xs text-neutral-400">
-                  {QUESTION_TYPE_LABEL[q.type]}
-                </p>
-                {q.survey_question_options.length > 0 && (
-                  <ul className="mt-2 list-disc pl-5 text-xs text-neutral-500">
-                    {q.survey_question_options.map((o) => (
-                      <li key={o.id}>{o.label}</li>
-                    ))}
-                  </ul>
-                )}
+        {questions.map((q, i) => {
+          const sectionChanged = q.section !== questions[i - 1]?.section;
+          return (
+            <div key={q.id}>
+              {sectionChanged && q.section && (
+                <h4 className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                  {q.section}
+                </h4>
+              )}
+              <div className="rounded-md border border-neutral-200 p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-sm text-neutral-900">
+                      {i + 1}. {q.text}
+                      {q.required && <span className="text-red-500"> *</span>}
+                    </p>
+                    <p className="mt-1 text-xs text-neutral-400">
+                      {QUESTION_TYPE_LABEL[q.type]}
+                    </p>
+                    {q.survey_question_options.length > 0 && (
+                      <ul className="mt-2 list-disc pl-5 text-xs text-neutral-500">
+                        {q.survey_question_options.map((o) => (
+                          <li key={o.id}>{o.label}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                  <form action={deleteQuestionAction.bind(null, id, q.id)}>
+                    <button type="submit" className="text-xs text-neutral-400 underline">
+                      Remover
+                    </button>
+                  </form>
+                </div>
               </div>
-              <form action={deleteQuestionAction.bind(null, id, q.id)}>
-                <button type="submit" className="text-xs text-neutral-400 underline">
-                  Remover
-                </button>
-              </form>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
-        <AddQuestionForm surveyId={id} />
+        <AddQuestionForm surveyId={id} defaultSection={questions.at(-1)?.section ?? undefined} />
       </section>
     </div>
   );

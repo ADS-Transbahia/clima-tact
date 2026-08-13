@@ -4,7 +4,13 @@ import { useActionState, useState } from "react";
 import { addQuestionAction } from "../actions";
 import { QUESTION_TYPE_LABEL, questionNeedsOptions, type QuestionType } from "@/server/services/surveys";
 
-export function AddQuestionForm({ surveyId }: { surveyId: string }) {
+export function AddQuestionForm({
+  surveyId,
+  defaultSection,
+}: {
+  surveyId: string;
+  defaultSection?: string;
+}) {
   const action = addQuestionAction.bind(null, surveyId);
   const [error, formAction, pending] = useActionState(action, null);
   const [type, setType] = useState<QuestionType>("single_choice");
@@ -14,6 +20,20 @@ export function AddQuestionForm({ surveyId }: { surveyId: string }) {
       action={formAction}
       className="flex flex-col gap-3 rounded-md border border-neutral-200 p-4"
     >
+      <div className="flex flex-col gap-1">
+        <label htmlFor="section" className="text-sm font-medium text-neutral-700">
+          Seção (opcional)
+        </label>
+        <input
+          id="section"
+          name="section"
+          type="text"
+          defaultValue={defaultSection}
+          placeholder="Ex: Comunicação"
+          className="rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900"
+        />
+      </div>
+
       <div className="flex flex-col gap-1">
         <label htmlFor="text" className="text-sm font-medium text-neutral-700">
           Pergunta
