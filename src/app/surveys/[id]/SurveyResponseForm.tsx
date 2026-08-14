@@ -128,7 +128,7 @@ function QuestionField({
   );
 }
 
-function SaveDraftButton({ action }: { action: () => Promise<void> }) {
+function SaveDraftButton({ action }: { action: (formData: FormData) => Promise<void> }) {
   const { pending } = useFormStatus();
   return (
     <button

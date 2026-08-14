@@ -16,7 +16,7 @@ Abra [http://localhost:3000](http://localhost:3000).
 
 ## Variáveis de ambiente
 
-Ver `.env.example`. `SUPABASE_SERVICE_ROLE_KEY` é server-only — nunca prefixar com `NEXT_PUBLIC_` nem expor ao client.
+Ver `.env.example`. `SUPABASE_SECRET_KEY` é server-only — nunca prefixar com `NEXT_PUBLIC_` nem expor ao client.
 
 ## Banco de dados (Supabase)
 
@@ -27,6 +27,16 @@ npx supabase login
 npx supabase link --project-ref <PROJECT_REF>
 npx supabase db push
 ```
+
+## Deploy (Render)
+
+`render.yaml` já define o serviço (Blueprint). No dashboard do Render:
+
+1. New + → Blueprint → conectar este repositório.
+2. Preencher as 3 env vars (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`) com os valores de `.env.local`.
+3. Deploy — pushes subsequentes em `main` atualizam o site automaticamente.
+
+Plano free "dorme" após ~15min sem acesso; o primeiro acesso seguinte demora ~30-50s pra acordar.
 
 ## Estrutura
 
