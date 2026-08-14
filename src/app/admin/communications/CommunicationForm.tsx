@@ -78,6 +78,30 @@ export function CommunicationForm({
         </div>
       </div>
 
+      <div className="flex flex-col gap-1">
+        <label htmlFor="coverImageUrl" className="text-sm font-medium text-neutral-700">
+          Imagem de capa (URL, opcional)
+        </label>
+        <input
+          id="coverImageUrl"
+          name="coverImageUrl"
+          type="url"
+          defaultValue={initial?.cover_image_url ?? ""}
+          placeholder="https://..."
+          className="rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900"
+        />
+      </div>
+
+      <label className="flex items-center gap-2 text-sm text-neutral-700">
+        <input
+          type="checkbox"
+          name="requireReadConfirmation"
+          defaultChecked={initial?.require_read_confirmation}
+          className="h-4 w-4"
+        />
+        Exigir confirmação de leitura
+      </label>
+
       {!initial && (
         <label className="flex items-center gap-2 text-sm text-neutral-700">
           <input type="checkbox" name="publish" defaultChecked className="h-4 w-4" />

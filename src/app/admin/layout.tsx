@@ -39,6 +39,11 @@ export default async function AdminLayout({
           <Link href="/admin/surveys" className="text-neutral-500 hover:underline">
             Pesquisas
           </Link>
+          {(profile.role === "hr_admin" || profile.role === "company_admin") && (
+            <Link href="/admin/access-requests" className="text-neutral-500 hover:underline">
+              Acessos
+            </Link>
+          )}
         </nav>
       </header>
       {children}

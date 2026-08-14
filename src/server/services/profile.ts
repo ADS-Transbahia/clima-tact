@@ -8,6 +8,13 @@ export type Profile = {
   company: { id: string; name: string } | null;
 };
 
+export const ROLE_LABEL: Record<Profile["role"], string> = {
+  employee: "Colaborador",
+  hr_admin: "RH",
+  sms_admin: "SMS",
+  company_admin: "Administrador",
+};
+
 export async function getCurrentProfile(
   supabase: SupabaseClient,
 ): Promise<Profile | null> {

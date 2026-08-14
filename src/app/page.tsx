@@ -1,19 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentProfile } from "@/server/services/profile";
+import { getCurrentProfile, ROLE_LABEL } from "@/server/services/profile";
 import { listPublishedCommunications } from "@/server/services/communications";
 import { countUnreadNotifications } from "@/server/services/notifications";
 import { getPendingPrioritySurvey } from "@/server/services/surveys";
 import { signOut } from "./login/actions";
 import { PrioritySurveyBanner } from "./PrioritySurveyBanner";
-
-const roleLabel: Record<string, string> = {
-  employee: "Colaborador",
-  hr_admin: "RH",
-  sms_admin: "SMS",
-  company_admin: "Administrador",
-};
 
 const ADMIN_ROLES = new Set(["hr_admin", "sms_admin", "company_admin"]);
 
@@ -33,8 +26,8 @@ export default async function Home() {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-white px-4 text-center">
         <p className="text-neutral-700">
-          Seu login funcionou, mas ainda não existe um perfil configurado para
-          você. Fale com o administrador para liberar seu acesso.
+          Seu cadastro está pendente de aprovação do RH/TI. Assim que for aprovado,
+          você já poderá acessar a plataforma normalmente.
         </p>
         <form action={signOut}>
           <button type="submit" className="text-sm text-neutral-500 underline">
@@ -59,11 +52,14 @@ export default async function Home() {
           <h1 className="text-lg font-semibold text-neutral-900">
             Olá, {profile.name.split(" ")[0]}
           </h1>
-          <p className="text-xs text-neutral-400">{roleLabel[profile.role]}</p>
+          <p className="text-xs text-neutral-400">{ROLE_LABEL[profile.role]}</p>
         </div>
         <div className="flex items-center gap-4">
           <Link href="/notifications" className="text-sm text-neutral-500 underline">
             Notificações{unreadCount > 0 && ` (${unreadCount})`}
+          </Link>
+          <Link href="/profile" className="text-sm text-neutral-500 underline">
+            Meu perfil
           </Link>
           {ADMIN_ROLES.has(profile.role) && (
             <Link
@@ -98,18 +94,29 @@ export default async function Home() {
           </p>
         ) : (
           communications.map((item) => (
-            <article
+            <Link
               key={item.id}
-              className="rounded-md border border-neutral-200 p-4"
+              href={`/communications/${item.id}`}
+              className="flex gap-3 rounded-md border border-neutral-200 p-4 hover:border-neutral-400"
             >
-              {item.priority === "high" && (
-                <span className="mb-1 inline-block rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
-                  Prioritário
-                </span>
+              {item.cover_image_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={item.cover_image_url}
+                  alt=""
+                  className="h-16 w-16 shrink-0 rounded object-cover"
+                />
               )}
-              <h3 className="font-medium text-neutral-900">{item.title}</h3>
-              <p className="mt-1 text-sm text-neutral-600">{item.body}</p>
-            </article>
+              <div>
+                {item.priority === "high" && (
+                  <span className="mb-1 inline-block rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                    Prioritário
+                  </span>
+                )}
+                <h3 className="font-medium text-neutral-900">{item.title}</h3>
+                <p className="mt-1 line-clamp-2 text-sm text-neutral-600">{item.body}</p>
+              </div>
+            </Link>
           ))
         )}
       </section>

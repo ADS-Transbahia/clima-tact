@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { LoginForm } from "./LoginForm";
@@ -19,6 +20,9 @@ export default async function LoginPage() {
         <p className="text-sm text-neutral-500">Transbahia · Plataforma do Colaborador</p>
       </div>
       <LoginForm />
+      <Link href="/signup" className="text-sm text-neutral-500 underline">
+        Criar acesso
+      </Link>
     </main>
   );
 }

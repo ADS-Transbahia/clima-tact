@@ -12,12 +12,14 @@ export type Communication = {
   cover_image_url: string | null;
   priority: CommunicationPriority;
   status: CommunicationStatus;
+  require_read_confirmation: boolean;
   publish_at: string | null;
   created_at: string;
+  author: { name: string } | null;
 };
 
 const LIST_COLUMNS =
-  "id, type, title, body, cover_image_url, priority, status, publish_at, created_at";
+  "id, type, title, body, cover_image_url, priority, status, require_read_confirmation, publish_at, created_at, author:author_id (name)";
 
 export async function listPublishedCommunications(
   supabase: SupabaseClient,
@@ -29,7 +31,7 @@ export async function listPublishedCommunications(
     .order("publish_at", { ascending: false, nullsFirst: false });
 
   if (error) throw error;
-  return data;
+  return data as unknown as Communication[];
 }
 
 export async function listAllCommunications(
@@ -41,7 +43,7 @@ export async function listAllCommunications(
     .order("created_at", { ascending: false });
 
   if (error) throw error;
-  return data;
+  return data as unknown as Communication[];
 }
 
 export async function getCommunication(
@@ -55,7 +57,7 @@ export async function getCommunication(
     .maybeSingle();
 
   if (error) throw error;
-  return data;
+  return data as unknown as Communication | null;
 }
 
 export type CommunicationInput = {
@@ -63,6 +65,8 @@ export type CommunicationInput = {
   body: string;
   type: CommunicationType;
   priority: CommunicationPriority;
+  requireReadConfirmation: boolean;
+  coverImageUrl?: string;
 };
 
 export async function createCommunication(
@@ -71,19 +75,26 @@ export async function createCommunication(
   authorId: string,
   input: CommunicationInput,
   publishNow: boolean,
-) {
-  const { error } = await supabase.from("communications").insert({
-    company_id: companyId,
-    author_id: authorId,
-    title: input.title,
-    body: input.body,
-    type: input.type,
-    priority: input.priority,
-    status: publishNow ? "published" : "draft",
-    publish_at: publishNow ? new Date().toISOString() : null,
-  });
+): Promise<string> {
+  const { data, error } = await supabase
+    .from("communications")
+    .insert({
+      company_id: companyId,
+      author_id: authorId,
+      title: input.title,
+      body: input.body,
+      type: input.type,
+      priority: input.priority,
+      require_read_confirmation: input.requireReadConfirmation,
+      cover_image_url: input.coverImageUrl || null,
+      status: publishNow ? "published" : "draft",
+      publish_at: publishNow ? new Date().toISOString() : null,
+    })
+    .select("id")
+    .single();
 
   if (error) throw error;
+  return data.id;
 }
 
 export async function updateCommunication(
@@ -98,6 +109,8 @@ export async function updateCommunication(
       body: input.body,
       type: input.type,
       priority: input.priority,
+      require_read_confirmation: input.requireReadConfirmation,
+      cover_image_url: input.coverImageUrl || null,
     })
     .eq("id", id);
 
@@ -121,4 +134,49 @@ export async function setCommunicationStatus(
 
   if (error) throw error;
   return data as { company_id: string; title: string };
+}
+
+export type ReadStatus = {
+  viewed_at: string | null;
+  confirmed_at: string | null;
+};
+
+export async function getCommunicationReadStatus(
+  supabase: SupabaseClient,
+  communicationId: string,
+  userId: string,
+): Promise<ReadStatus | null> {
+  const { data, error } = await supabase
+    .from("communication_reads")
+    .select("viewed_at, confirmed_at")
+    .eq("communication_id", communicationId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function markCommunicationViewed(
+  supabase: SupabaseClient,
+  communicationId: string,
+  userId: string,
+) {
+  const { error } = await supabase.from("communication_reads").upsert(
+    { communication_id: communicationId, user_id: userId, viewed_at: new Date().toISOString() },
+    { onConflict: "communication_id,user_id" },
+  );
+  if (error) throw error;
+}
+
+export async function confirmCommunicationRead(
+  supabase: SupabaseClient,
+  communicationId: string,
+  userId: string,
+) {
+  const { error } = await supabase.from("communication_reads").upsert(
+    { communication_id: communicationId, user_id: userId, confirmed_at: new Date().toISOString() },
+    { onConflict: "communication_id,user_id" },
+  );
+  if (error) throw error;
 }
